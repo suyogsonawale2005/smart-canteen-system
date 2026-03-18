@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Smart Canteen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-main { padding-top: 2rem; padding-bottom: 4rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem; }
+        .stat-card { background: var(--surface); padding: 1.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border-bottom: 4px solid var(--primary); }
+        .stat-val { font-size: 2rem; font-weight: 700; color: var(--text-main); }
+        .stat-label { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
+        
+        .admin-section { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 1.5rem; margin-bottom: 2.5rem; }
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { padding: 1rem; border-bottom: 2px solid var(--border); font-weight: 700; color: var(--text-muted); }
+        td { padding: 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        
+        .status-select { padding: 0.4rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text-main); font-family: inherit; }
+        .status-select option { background: var(--surface); color: var(--text-main); }
+        
+        .inventory-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(26px); }
+    </style>
+</head>
+<body style="background-color: var(--background);">
+    <header class="app-header">
+        <div class="container nav-container">
+            <a href="#" class="nav-brand">
+                <i class="fa-solid fa-shield-halved"></i> Admin Portal
+            </a>
+            <div class="nav-actions">
+                <button id="theme-toggle" class="theme-toggle-nav"><i class="fa-solid fa-moon"></i></button>
+                <div class="user-profile">
+                    <div class="user-avatar" style="background: var(--text-main); color: white;">A</div>
+                    <div class="user-info" style="display: block;">
+                        <div class="user-name">Head Administrator</div>
+                        <div class="user-role">System Access Enabled</div>
+                    </div>
+                </div>
+                <button class="btn btn-outline" style="width: auto; padding: 0.5rem 1rem;" onclick="window.logout()">
+                    Logout <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container admin-main">
+        <div class="stats-grid animate-fade-in">
+            <div class="stat-card">
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-val" id="stat-revenue">₹0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Orders</div>
+                <div class="stat-val" id="stat-orders">0</div>
+            </div>
+            <div class="stat-card" style="border-color: var(--success);">
+                <div class="stat-label">Items Sold Today</div>
+                <div class="stat-val" id="stat-items">0</div>
+            </div>
+            <div class="stat-card" style="border-color: var(--secondary);">
+                <div class="stat-label">Stock Warnings</div>
+                <div class="stat-val" id="stat-stock">0</div>
+            </div>
+        </div>
+
+        <!-- Canteen Settings -->
+        <div class="admin-section animate-fade-in">
+            <h2 style="margin-bottom:1.5rem;"><i class="fa-solid fa-clock" style="color:var(--primary);"></i> Canteen Operating Hours</h2>
+            <div style="background:var(--background); padding:1.5rem; border-radius:var(--radius-md); display:flex; gap:1.5rem; align-items:center; flex-wrap:wrap;">
+                <div style="flex:1; min-width:200px;">
+                    <label class="form-label">Opening Time</label>
+                    <input type="time" id="canteen-open" class="form-input">
+                </div>
+                <div style="flex:1; min-width:200px;">
+                    <label class="form-label">Closing Time</label>
+                    <input type="time" id="canteen-close" class="form-input">
+                </div>
+                <div style="display:flex; align-items:flex-end;">
+                    <button class="btn btn-primary" style="margin-top:auto;" onclick="saveCanteenHours()">
+                        <i class="fa-solid fa-save"></i> Save Hours
+                    </button>
+                </div>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;"><i class="fa-solid fa-circle-info"></i> Students will not be able to interact with the cart out of these hours.</p>
+        </div>
+
+        <!-- Monthly Sales Section -->
+        <div class="admin-section animate-fade-in delay-1">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <h2><i class="fa-solid fa-chart-bar" style="color: var(--primary);"></i> Sales Report</h2>
+                <div style="display: flex; gap: 0.5rem;">
+                    <select id="report-type-filter" class="status-select" style="padding: 0.5rem 1rem; font-size: 0.95rem;" onchange="renderSalesReport()">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly" selected>Monthly</option>
+                    </select>
+                </div>
+            </div>
+            <!-- Bar Chart -->
+            <div id="monthly-chart" style="display: flex; align-items: flex-end; gap: 0.5rem; height: 180px; padding: 0 0.5rem 0.5rem; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem; overflow-x: auto;"></div>
+            <!-- Monthly Table -->
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th id="report-period-head">Period</th>
+                            <th>Orders</th>
+                            <th>Items Sold</th>
+                            <th>Revenue (Delivered)</th>
+                            <th>Avg. Order Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monthly-table-body"></tbody>
+                    <tfoot>
+                        <tr style="font-weight: 700; background: var(--background);">
+                            <td>Total</td>
+                            <td id="monthly-total-orders">0</td>
+                            <td id="monthly-total-items">0</td>
+                            <td id="monthly-total-revenue">₹0.00</td>
+                            <td>—</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div class="admin-section animate-fade-in delay-2">
+            <h2 style="margin-bottom: 1.5rem;"><i class="fa-solid fa-list-check" style="color: var(--primary);"></i> Live Order Management</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-admin-body">
+                        <!-- Loaded via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Menu Management -->
+        <div class="admin-section animate-fade-in delay-3">
+            <h2 style="margin-bottom:1.5rem;"><i class="fa-solid fa-utensils" style="color:var(--primary);"></i> Menu Management</h2>
+            <details style="margin-bottom:1.5rem;">
+                <summary style="cursor:pointer;font-weight:700;color:var(--primary);padding:0.75rem;background:var(--background);border-radius:var(--radius-md);display:flex;align-items:center;gap:0.5rem;">
+                    <i class="fa-solid fa-circle-plus"></i>&nbsp;Add New Menu Item
+                </summary>
+                <div style="border:1px solid var(--border);border-radius:0 0 var(--radius-md) var(--radius-md);padding:1.25rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div><label class="form-label">Name *</label><input type="text" id="new-name" class="form-input" placeholder="e.g. Paneer Tikka"></div>
+                    <div><label class="form-label">Price (Rs) *</label><input type="number" id="new-price" class="form-input" placeholder="80" min="1"></div>
+                    <div><label class="form-label">Type *</label><select id="new-type" class="form-input status-select" style="padding:0.75rem;"><option value="veg">Veg</option><option value="non-veg">Non-Veg</option></select></div>
+                    <div><label class="form-label">Category *</label><select id="new-category" class="form-input status-select" style="padding:0.75rem;"><option value="Snacks">Snacks</option><option value="Breakfast">Breakfast</option><option value="Meals">Lunch / Meals</option><option value="Beverages">Beverages</option><option value="Chinese">Chinese</option><option value="Burgers">Fast Food</option><option value="Starters">Starters</option></select></div>
+                    <div style="grid-column:1/-1;"><label class="form-label">Image URL</label><input type="text" id="new-img" class="form-input" placeholder="https://... or leave blank for auto-image"></div>
+                    <div style="grid-column:1/-1;"><label class="form-label">Description</label><input type="text" id="new-desc" class="form-input" placeholder="Short description"></div>
+                    <div style="grid-column:1/-1;"><button class="btn btn-primary" style="width:auto;" onclick="adminAddItem()"><i class="fa-solid fa-plus"></i> Add to Menu</button></div>
+                </div>
+            </details>
+            <div style="margin-bottom: 1.25rem; position: relative;">
+                <i class="fa-solid fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                <input type="text" id="admin-menu-search" class="form-input" placeholder="Search menu by name, type, or description..." style="padding-left: 2.75rem; border-radius: var(--radius-full);" oninput="renderMenuManagement()">
+            </div>
+            
+            <details class="animate-fade-in" style="margin-bottom: 1.5rem;">
+                <summary style="cursor:pointer;font-weight:700;color:var(--primary);padding:0.75rem;background:var(--background);border-radius:var(--radius-md);display:flex;align-items:center;gap:0.5rem; border: 1px solid var(--border);">
+                    <i class="fa-solid fa-list"></i>&nbsp;Existing Menu Items (Click to minimize/expand)
+                </summary>
+                <div class="table-responsive" style="border: 1px solid var(--border); border-top: none; border-radius: 0 0 var(--radius-md) var(--radius-md); max-height: 400px; overflow-y: auto;">
+                    <table>
+                        <thead><tr><th style="position:sticky; top:0; background:var(--surface);">#</th><th style="position:sticky; top:0; background:var(--surface);">Name</th><th style="position:sticky; top:0; background:var(--surface);">Type</th><th style="position:sticky; top:0; background:var(--surface);">Price</th><th style="position:sticky; top:0; background:var(--surface);">Availability</th><th style="position:sticky; top:0; background:var(--surface);">Actions</th></tr></thead>
+                        <tbody id="menu-manage-body"></tbody>
+                    </table>
+                </div>
+            </details>
+        </div>
+
+
+        <!-- Edit Item Modal -->
+        <div id="edit-item-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:4000;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+            <div style="background:var(--surface);width:90%;max-width:480px;border-radius:var(--radius-lg);padding:1.5rem;box-shadow:var(--shadow-lg);">
+                <h3 style="margin-bottom:1.25rem;"><i class="fa-solid fa-pen-to-square" style="color:var(--primary);"></i> Edit Menu Item</h3>
+                <input type="hidden" id="edit-id">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div><label class="form-label">Name</label><input type="text" id="edit-name" class="form-input"></div>
+                    <div><label class="form-label">Price (Rs)</label><input type="number" id="edit-price" class="form-input" min="1"></div>
+                    <div><label class="form-label">Type</label><select id="edit-type" class="form-input status-select" style="padding:0.75rem;"><option value="veg">Veg</option><option value="non-veg">Non-Veg</option></select></div>
+                    <div><label class="form-label">Image URL</label><input type="text" id="edit-img" class="form-input"></div>
+                    <div style="grid-column:1/-1;"><label class="form-label">Description</label><input type="text" id="edit-desc" class="form-input"></div>
+                </div>
+                <div style="display:flex;gap:1rem;margin-top:1.25rem;">
+                    <button class="btn btn-outline" style="flex:1;" onclick="closeEditModal()">Cancel</button>
+                    <button class="btn btn-primary" style="flex:2;" onclick="saveEditItem()"><i class="fa-solid fa-check"></i> Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/state.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/menu.js"></script> <!-- To get menuItems array -->
+    <script>
+        // Secure Admin check
+        if (typeof window.requireAdmin === 'function') requireAdmin();
+
+        async function renderAdminDashboard() {
+            const orders = window.getAllOrders ? window.getAllOrders() : [];
+            const oosCount = JSON.parse(localStorage.getItem('canteen_out_of_stock') || '[]').length;
+            
+            try {
+                const res = await fetch('http://127.0.0.1:5000/api/admin/dashboard');
+                const data = await res.json();
+                if (data.overall) {
+                    document.getElementById('stat-revenue').innerText = `₹${data.overall.total_revenue.toFixed(2)}`;
+                    document.getElementById('stat-orders').innerText = data.overall.total_orders;
+                }
+            } catch (err) {
+                // Fallback to local
+                const revenue = orders.reduce((sum, o) => sum + o.total, 0);
+                document.getElementById('stat-revenue').innerText = `₹${revenue.toFixed(2)}`;
+                document.getElementById('stat-orders').innerText = orders.length;
+            }
+
+            const totalItems = orders.reduce((sum, o) => sum + o.items.reduce((s,i) => s + i.qty, 0), 0);
+            document.getElementById('stat-items').innerText = totalItems;
+            document.getElementById('stat-stock').innerText = oosCount;
+
+            const tableBody = document.getElementById('orders-admin-body');
+            tableBody.innerHTML = orders.map(order => `
+                <tr>
+                    <td><strong>${order.id}</strong><div style="font-size: 0.75rem; color: var(--text-muted);">${new Date(order.time).toLocaleTimeString()}</div></td>
+                    <td>${order.userName}<div style="font-size: 0.75rem; color: var(--text-muted);">${order.userType}</div></td>
+                    <td>${order.items.map(i => `${i.qty}x ${i.name}`).join(', ')}</td>
+                    <td>₹${order.total.toFixed(2)}</td>
+                    <td>
+                        <select class="status-select" onchange="handleStatusChange('${order.id}', this.value)">
+                            <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                            <option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>Preparing</option>
+                            <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>Ready</option>
+                            <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                            <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                        </select>
+                    </td>
+                </tr>
+            `).join('');
+
+            const invList = document.getElementById('inventory-list');
+            if (window.menuItems) {
+                invList.innerHTML = window.menuItems.map(item => {
+                    const isOOS = window.isOutOfStock(item.name);
+                    return `
+                        <div class="inventory-item">
+                            <div>
+                                <strong>${item.name}</strong>
+                                <span style="font-size: 0.8rem; margin-left:1rem; color: var(--text-muted);">${item.type}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="font-size: 0.8rem; font-weight: 700; color: ${isOOS ? 'var(--danger)' : 'var(--success)'};">${isOOS ? 'OUT OF STOCK' : 'AVAILABLE'}</span>
+                                <label class="switch">
+                                    <input type="checkbox" ${!isOOS ? 'checked' : ''} onchange="handleStockToggle('${item.name}')">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        window.handleStatusChange = function(id, val) {
+            if (window.updateOrderStatus(id, val)) renderAdminDashboard();
+        }
+
+        window.handleStockToggle = function(name) {
+            window.toggleOutOfStock(name);
+            renderMenuManagement();
+            renderAdminDashboard();
+        }
+
+        // ---- Menu Management ----
+        function renderMenuManagement() {
+            let menu = window.getAdminMenu ? window.getAdminMenu() : (window.menuItems || []);
+            
+            // Search filter
+            const searchTerm = (document.getElementById('admin-menu-search')?.value || '').toLowerCase();
+            if (searchTerm) {
+                menu = menu.filter(item => 
+                    item.name.toLowerCase().includes(searchTerm) || 
+                    (item.desc && item.desc.toLowerCase().includes(searchTerm)) ||
+                    (item.type && item.type.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            const tbody = document.getElementById('menu-manage-body');
+            tbody.innerHTML = menu.map((item, idx) => {
+                const isOOS = window.isOutOfStock(item.name);
+                return `<tr>
+                    <td>${idx + 1}</td>
+                    <td><strong>${item.name}</strong><div style="font-size:0.75rem;color:var(--text-muted);">${item.desc || ''}</div></td>
+                    <td><span style="font-size:0.8rem;font-weight:600;color:${item.type==='veg'?'var(--success)':'#ef4444'}">${item.type === 'veg' ? '🥗 Veg' : '🍗 Non-Veg'}</span></td>
+                    <td style="font-weight:600;">₹${item.price}</td>
+                    <td>
+                        <label class="switch">
+                            <input type="checkbox" ${!isOOS ? 'checked' : ''} onchange="handleStockToggle('${item.name}')">
+                            <span class="slider"></span>
+                        </label>
+                        <span style="font-size:0.75rem;color:${isOOS?'var(--danger)':'var(--success)'}; margin-left:0.5rem;">${isOOS?'Out of Stock':'Available'}</span>
+                    </td>
+                    <td style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                        <button class="btn btn-outline" style="padding:0.4rem 0.7rem; font-size:0.8rem;" onclick="openEditModal(${item.id})"><i class="fa-solid fa-pen"></i> Edit</button>
+                        <button style="padding:0.4rem 0.7rem; font-size:0.8rem; background:#ef4444; color:white; border:none; border-radius:var(--radius-sm); cursor:pointer;" onclick="adminDeleteItem(${item.id})"><i class="fa-solid fa-trash"></i> Delete</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        window.adminAddItem = async function() {
+            const name = document.getElementById('new-name').value.trim();
+            const price = parseFloat(document.getElementById('new-price').value);
+            const type = document.getElementById('new-type').value;
+            const category = document.getElementById('new-category').value;
+            const img = document.getElementById('new-img').value.trim() || '';
+            const desc = document.getElementById('new-desc').value.trim();
+            if (!name || !price) { alert('Name and Price are required!'); return; }
+            await window.addMenuItem({ name, price, type, category, img, desc });
+            ['new-name','new-price','new-img','new-desc'].forEach(id => document.getElementById(id).value = '');
+            renderMenuManagement();
+            alert(`✅ "${name}" added to menu!`);
+        };
+
+        window.openEditModal = function(id) {
+            const menu = window.getAdminMenu();
+            const item = menu.find(i => i.id === id);
+            if (!item) return;
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-name').value = item.name;
+            document.getElementById('edit-price').value = item.price;
+            document.getElementById('edit-type').value = item.type;
+            document.getElementById('edit-img').value = item.img || '';
+            document.getElementById('edit-desc').value = item.desc || '';
+            document.getElementById('edit-item-modal').style.display = 'flex';
+        };
+
+        window.closeEditModal = function() {
+            document.getElementById('edit-item-modal').style.display = 'none';
+        };
+
+        window.saveEditItem = async function() {
+            const id = parseInt(document.getElementById('edit-id').value);
+            const updates = {
+                name: document.getElementById('edit-name').value.trim(),
+                price: parseFloat(document.getElementById('edit-price').value),
+                type: document.getElementById('edit-type').value,
+                img: document.getElementById('edit-img').value.trim(),
+                desc: document.getElementById('edit-desc').value.trim()
+            };
+            if (!updates.name || !updates.price) { alert('Name and Price are required!'); return; }
+            await window.updateMenuItem(id, updates);
+            closeEditModal();
+            renderMenuManagement();
+        };
+
+        window.adminDeleteItem = async function(id) {
+            const menu = window.getAdminMenu();
+            const item = menu.find(i => i.id === id);
+            if (!item) return;
+            if (!confirm(`Delete "${item.name}" from the menu? This cannot be undone.`)) return;
+            await window.deleteMenuItem(id);
+            renderMenuManagement();
+        };
+
+        // ---- Sales Reports ----
+        const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+        async function renderSalesReport() {
+            const reportType = document.getElementById('report-type-filter').value;
+            const periodHead = document.getElementById('report-period-head');
+            if(reportType === 'daily') periodHead.innerText = 'Date';
+            else if(reportType === 'weekly') periodHead.innerText = 'Week';
+            else periodHead.innerText = 'Month';
+
+            try {
+                const res = await fetch('http://127.0.0.1:5000/api/admin/dashboard');
+                const data = await res.json();
+                
+                if (data.monthly_sales && data.daily_sales && data.weekly_sales) {
+                    let activeData = data.monthly_sales;
+                    let labelKey = 'month';
+                    let revKey = 'monthly_revenue';
+                    
+                    if (reportType === 'daily') {
+                        activeData = data.daily_sales;
+                        labelKey = 'date';
+                        revKey = 'daily_revenue';
+                    } else if (reportType === 'weekly') {
+                        activeData = data.weekly_sales;
+                        labelKey = 'week';
+                        revKey = 'weekly_revenue';
+                    }
+
+                    const maxRev = Math.max(...activeData.map(m => parseFloat(m[revKey])), 1);
+
+                    const chart = document.getElementById('monthly-chart');
+                    chart.innerHTML = [...activeData].reverse().slice(-12).map(m => {
+                        const rev = parseFloat(m[revKey]);
+                        const pct = Math.round((rev / maxRev) * 100);
+                        const color = rev > 0 ? 'var(--primary)' : 'var(--border)';
+                        return `
+                            <div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:40px;gap:4px;">
+                                <span style="font-size:0.65rem;font-weight:700;color:var(--text-muted);">${rev > 0 ? '₹' + (rev/1000).toFixed(1) + 'k' : ''}</span>
+                                <div style="width:100%;background:${color};border-radius:4px 4px 0 0;height:${Math.max(pct, rev > 0 ? 4 : 2)}%;transition:height 0.4s ease;"></div>
+                                <span style="font-size:0.7rem;color:var(--text-muted);">${m[labelKey]}</span>
+                            </div>
+                        `;
+                    }).join(''); // Show oldest to newest in chart
+
+                    // Table
+                    const tbody = document.getElementById('monthly-table-body');
+                    let totOrders = 0, totRev = 0;
+                    tbody.innerHTML = activeData.map(m => {
+                        const orders = m.total_orders;
+                        const rev = parseFloat(m[revKey]);
+                        totOrders += orders;
+                        totRev += rev;
+                        const avg = orders > 0 ? (rev / orders) : 0;
+                        return `<tr>
+                            <td><strong>${m[labelKey]}</strong></td>
+                            <td>${orders}</td>
+                            <td>—</td>
+                            <td style="color:var(--primary);font-weight:600;">₹${rev.toFixed(2)}</td>
+                            <td>₹${avg.toFixed(2)}</td>
+                        </tr>`;
+                    }).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem;">No data available</td></tr>`;
+
+                    document.getElementById('monthly-total-orders').innerText = totOrders;
+                    document.getElementById('monthly-total-items').innerText = '—';
+                    document.getElementById('monthly-total-revenue').innerText = `₹${totRev.toFixed(2)}`;
+                    return;
+                }
+            } catch (err) {
+                console.error("Failed to fetch backend dashboard data", err);
+            }
+
+            // Fallback: Local logic (Simplified fallback since backend is updated)
+            const orders = window.getAllOrders ? window.getAllOrders() : [];
+            const localData = Array.from({length: 12}, (_, i) => ({ month: i, orders: 0, items: 0, revenue: 0 }));
+
+            orders.forEach(o => {
+                const d = new Date(o.time);
+                if (d.getFullYear() !== new Date().getFullYear()) return;
+                const m = d.getMonth();
+                localData[m].orders++;
+                if (o.status === 'delivered') localData[m].revenue += o.total;
+                localData[m].items += o.items.reduce((s,i) => s + i.qty, 0);
+            });
+
+            const maxRev = Math.max(...localData.map(m => m.revenue), 1);
+
+            // Bar Chart
+            const chart = document.getElementById('monthly-chart');
+            chart.innerHTML = localData.map(m => {
+                const pct = Math.round((m.revenue / maxRev) * 100);
+                const color = m.revenue > 0 ? 'var(--primary)' : 'var(--border)';
+                return `
+                    <div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:40px;gap:4px;">
+                        <span style="font-size:0.65rem;font-weight:700;color:var(--text-muted);">${m.revenue > 0 ? '₹' + (m.revenue/1000).toFixed(1) + 'k' : ''}</span>
+                        <div style="width:100%;background:${color};border-radius:4px 4px 0 0;height:${Math.max(pct, m.revenue > 0 ? 4 : 2)}%;transition:height 0.4s ease;"></div>
+                        <span style="font-size:0.7rem;color:var(--text-muted);">${MONTHS[m.month]}</span>
+                    </div>
+                `;
+            }).join('');
+
+            // Table
+            const tbody = document.getElementById('monthly-table-body');
+            let totOrders = 0, totItems = 0, totRev = 0;
+            tbody.innerHTML = localData.map(m => {
+                if (m.orders === 0) return '';
+                totOrders += m.orders;
+                totItems += m.items;
+                totRev += m.revenue;
+                const avg = m.orders > 0 ? (m.revenue / m.orders) : 0;
+                return `<tr>
+                    <td><strong>${MONTHS[m.month]}</strong></td>
+                    <td>${m.orders}</td>
+                    <td>${m.items}</td>
+                    <td style="color:var(--primary);font-weight:600;">₹${m.revenue.toFixed(2)}</td>
+                    <td>₹${avg.toFixed(2)}</td>
+                </tr>`;
+            }).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem;">No orders found for ${year}</td></tr>`;
+
+            document.getElementById('monthly-total-orders').innerText = totOrders;
+            document.getElementById('monthly-total-items').innerText = totItems;
+            document.getElementById('monthly-total-revenue').innerText = `₹${totRev.toFixed(2)}`;
+        }
+
+        // ---- Canteen Settings ----
+        async function fetchCanteenHours() {
+            try {
+                const res = await fetch('http://127.0.0.1:5000/api/settings');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.settings) {
+                        document.getElementById('canteen-open').value = data.settings.opening_time || '09:00';
+                        document.getElementById('canteen-close').value = data.settings.closing_time || '18:00';
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch settings", err);
+            }
+        }
+
+        async function saveCanteenHours() {
+            const open = document.getElementById('canteen-open').value;
+            const close = document.getElementById('canteen-close').value;
+            if (!open || !close) { alert('Please select both opening and closing times.'); return; }
+            
+            try {
+                const res = await fetch('http://127.0.0.1:5000/api/settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ settings: { opening_time: open, closing_time: close } })
+                });
+                if (res.ok) {
+                    alert('Canteen operating hours updated successfully!');
+                } else {
+                    alert('Failed to update hours.');
+                }
+            } catch(e) {
+                console.error(e);
+                alert('Error updating hours');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderAdminDashboard();
+            renderSalesReport();
+            fetchCanteenHours();
+            if (typeof renderMenuManagement === 'function') renderMenuManagement();
+        });
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>

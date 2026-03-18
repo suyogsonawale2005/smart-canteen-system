@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Login | Smart Canteen</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Correct CSS file -->
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<button id="theme-toggle" class="theme-toggle-floating">
+<i class="fa-solid fa-moon"></i>
+</button>
+
+<div class="auth-layout">
+
+<div class="bg-illustrations">
+
+<img src="images/vada_pav.png" alt="Vada Pav" class="bg-image bg-img-1">
+
+<img src="images/paneer_thali.png" alt="Paneer Thali" class="bg-image bg-img-2">
+
+<img src="images/chinese_noodles.png" alt="Chinese Noodles" class="bg-image bg-img-3">
+
+<img src="images/poha.png" alt="Poha" class="bg-image bg-img-4">
+
+</div>
+
+
+<div class="auth-card animate-fade-in">
+
+<div class="auth-header">
+<i class="fa-solid fa-burger logo-icon"></i>
+<h1>Welcome Back! 👋</h1>
+<p>Login to order your favorite campus meals</p>
+</div>
+
+<form id="login-form">
+
+<div class="form-group">
+
+<label class="form-label">Student ID / Email</label>
+
+<div style="position: relative;">
+<i class="fa-regular fa-user" style="position:absolute;left:1rem;top:1rem;"></i>
+
+<input type="text"
+id="email"
+class="form-input"
+style="padding-left:2.5rem;"
+placeholder="e.g. S1234567 or john@college.edu"
+required>
+
+</div>
+</div>
+
+
+<div class="form-group">
+
+<label class="form-label">Password</label>
+
+<div style="position: relative;">
+<i class="fa-solid fa-lock" style="position:absolute;left:1rem;top:1rem;"></i>
+
+<input type="password"
+id="password"
+class="form-input"
+style="padding-left:2.5rem;"
+placeholder="••••••••"
+required>
+
+</div>
+</div>
+
+
+<button type="submit" class="btn btn-primary">
+Sign In <i class="fa-solid fa-arrow-right"></i>
+</button>
+
+</form>
+
+
+<div class="auth-footer">
+
+<p>
+New here?
+<a href="signup.html">Create an account</a>
+</p>
+
+<p style="margin-top:10px;">
+<a href="admin.html">
+<i class="fa-solid fa-shield-halved"></i>
+Admin Portal
+</a>
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- JS file -->
+<script src="js/auth.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

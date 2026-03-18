@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Admin Create Account | Smart Canteen</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Correct CSS -->
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<button id="theme-toggle" class="theme-toggle-floating">
+<i class="fa-solid fa-moon"></i>
+</button>
+
+<div class="auth-layout" style="padding:1rem; justify-content:center; align-items:flex-start;">
+
+<!-- Background Food Images -->
+<div class="bg-illustrations">
+
+<img src="images/vada_pav.png" alt="Vada Pav" class="bg-image bg-img-1">
+
+<img src="images/paneer_thali.png" alt="Paneer Thali" class="bg-image bg-img-2">
+
+<img src="images/chinese_noodles.png" alt="Chinese Noodles" class="bg-image bg-img-3">
+
+<img src="images/poha.png" alt="Poha" class="bg-image bg-img-4">
+
+</div>
+
+<div class="auth-card animate-fade-in" style="margin-top:2rem; margin-bottom:2rem; max-width:500px;">
+
+<div class="auth-header">
+
+<i class="fa-solid fa-server logo-icon"></i>
+
+<h1>Admin Secure Reg 🛡️</h1>
+
+<p>Register to manage the canteen</p>
+
+</div>
+
+<form id="admin-signup-form">
+
+<div class="form-group">
+
+<label class="form-label">Full Name</label>
+
+<input type="text" id="admin-name" class="form-input" placeholder="Admin Name" required>
+
+</div>
+
+<div class="form-group">
+
+<label class="form-label">Phone Number</label>
+
+<input type="tel" id="admin-phone" class="form-input" placeholder="1234567890" required>
+
+</div>
+
+<div class="form-group">
+
+<label class="form-label">Admin Email</label>
+
+<input type="email" id="admin-email" class="form-input" placeholder="admin@canteen.edu" required>
+
+</div>
+
+<div class="form-group">
+
+<label class="form-label">Admin Key / Password</label>
+
+<input type="password" id="admin-password" class="form-input" placeholder="Create a strong password" required>
+
+</div>
+
+<button type="submit" class="btn btn-primary" style="margin-top:1rem;">
+Create Admin Account <i class="fa-solid fa-user-shield"></i>
+</button>
+
+</form>
+
+<div class="auth-footer">
+
+<p>
+Already have an admin account?
+<a href="admin.html">Sign in</a>
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+<script src="js/auth.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>

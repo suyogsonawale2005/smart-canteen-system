@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Admin Login | Smart Canteen</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Correct CSS -->
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<button id="theme-toggle" class="theme-toggle-floating">
+<i class="fa-solid fa-moon"></i>
+</button>
+
+<div class="auth-layout">
+
+<!-- Food Images -->
+<div class="bg-illustrations">
+
+<img src="images/vada_pav.png" class="bg-image bg-img-1" alt="Vada Pav">
+
+<img src="images/paneer_thali.png" class="bg-image bg-img-2" alt="Paneer Thali">
+
+<img src="images/chinese_noodles.png" class="bg-image bg-img-3" alt="Chinese Noodles">
+
+<img src="images/poha.png" class="bg-image bg-img-4" alt="Poha">
+
+</div>
+
+<div class="auth-card">
+
+<div class="auth-header">
+
+<i class="fa-solid fa-server logo-icon"></i>
+
+<h1>Admin Secure Login</h1>
+
+<p>Canteen Management System - Admin Portal</p>
+
+</div>
+
+<form id="admin-form">
+
+<div class="form-group">
+
+<label class="form-label">Admin ID</label>
+
+<input type="text" id="admin-id" class="form-input" placeholder="Enter Admin ID" required>
+
+</div>
+
+<div class="form-group">
+
+<label class="form-label">Admin Key / Password</label>
+
+<input type="password" id="admin-key" class="form-input" placeholder="Enter Admin Key" required>
+
+</div>
+
+<button type="submit" class="btn btn-primary">
+
+Authenticate <i class="fa-solid fa-unlock"></i>
+
+</button>
+
+</form>
+
+<div class="auth-footer">
+
+<p style="margin-bottom: 0.5rem;">
+
+Don't have an admin account? <a href="admin-signup.html">Create one</a>
+
+</p>
+
+<p>
+
+<a href="index.html">
+
+<i class="fa-solid fa-arrow-left"></i> Back to Student Login
+
+</a>
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+<script src="js/auth.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>
