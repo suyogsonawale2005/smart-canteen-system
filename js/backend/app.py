@@ -52,7 +52,7 @@ def signup():
 
     conn = get_db_connection()
     if not conn:
-        return jsonify({"error": "Database connection failed", "details": last_db_error}), 500
+        return jsonify({"error": f"Database connection failed: {last_db_error}"}), 500
 
     cursor = conn.cursor()
     try:
@@ -84,7 +84,7 @@ def student_login():
 
     conn = get_db_connection()
     if not conn:
-        return jsonify({"error": "Database connection failed", "details": last_db_error}), 500
+        return jsonify({"error": f"Database connection failed: {last_db_error}"}), 500
 
     cursor = conn.cursor(dictionary=True)
     try:
@@ -116,7 +116,7 @@ def admin_signup():
 
     conn = get_db_connection()
     if not conn:
-        return jsonify({"error": "Database connection failed", "details": last_db_error}), 500
+        return jsonify({"error": f"Database connection failed: {last_db_error}"}), 500
 
     cursor = conn.cursor()
     try:
@@ -145,7 +145,7 @@ def admin_login():
 
     conn = get_db_connection()
     if not conn:
-        return jsonify({"error": "Database connection failed", "details": last_db_error}), 500
+        return jsonify({"error": f"Database connection failed: {last_db_error}"}), 500
 
     cursor = conn.cursor(dictionary=True)
     try:
@@ -169,7 +169,7 @@ def manage_menu():
     if request.method == 'GET':
         conn = get_db_connection()
         if not conn:
-            return jsonify({"error": "Database connection failed", "details": last_db_error}), 500
+            return jsonify({"error": f"Database connection failed: {last_db_error}"}), 500
 
         cursor = conn.cursor(dictionary=True)
         try:
@@ -197,7 +197,7 @@ def manage_menu():
 
         conn = get_db_connection()
         if not conn:
-            return jsonify({"error": "Database connection failed", "details": last_db_error}), 500
+            return jsonify({"error": f"Database connection failed: {last_db_error}"}), 500
 
         cursor = conn.cursor()
         try:
@@ -217,7 +217,7 @@ def manage_menu():
 def manage_menu_item(item_id):
     conn = get_db_connection()
     if not conn:
-        return jsonify({"error": "Database connection failed", "details": last_db_error}), 500
+        return jsonify({"error": f"Database connection failed: {last_db_error}"}), 500
     
     cursor = conn.cursor()
     if request.method == 'PUT':
@@ -300,7 +300,7 @@ def place_order():
 
     conn = get_db_connection()
     if not conn:
-        return jsonify({"error": "Database connection failed", "details": last_db_error}), 500
+        return jsonify({"error": f"Database connection failed: {last_db_error}"}), 500
 
     cursor = conn.cursor()
     try:
@@ -337,7 +337,7 @@ def update_order_status(order_id):
         
     conn = get_db_connection()
     if not conn:
-        return jsonify({"error": "Database connection failed", "details": last_db_error}), 500
+        return jsonify({"error": f"Database connection failed: {last_db_error}"}), 500
         
     cursor = conn.cursor()
     try:
@@ -354,7 +354,7 @@ def update_order_status(order_id):
 def get_admin_orders():
     conn = get_db_connection()
     if not conn:
-        return jsonify({"error": "Database connection failed", "details": last_db_error}), 500
+        return jsonify({"error": f"Database connection failed: {last_db_error}"}), 500
 
     cursor = conn.cursor(dictionary=True)
     try:
@@ -397,7 +397,7 @@ def get_admin_orders():
 def get_dashboard_data():
     conn = get_db_connection()
     if not conn:
-        return jsonify({"error": "Database connection failed", "details": last_db_error}), 500
+        return jsonify({"error": f"Database connection failed: {last_db_error}"}), 500
 
     cursor = conn.cursor(dictionary=True)
     try:
