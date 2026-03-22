@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initCategoryFilters();
     
     // Fetch menu from the backend API
-    fetch('http://127.0.0.1:5000/api/menu')
+    fetch('https://smart-canteen-system-hvah.onrender.com/api/menu')
         .then(res => res.json())
         .then(data => {
             if (data.menu) {

@@ -250,7 +250,7 @@
 
         async function fetchAdminOrders() {
             try {
-                const res = await fetch('http://127.0.0.1:5000/api/admin/orders');
+                const res = await fetch('https://smart-canteen-system-hvah.onrender.com/api/admin/orders');
                 if (res.ok) {
                     const data = await res.json();
                     if (data.orders) {
@@ -279,7 +279,7 @@
             }
             
             try {
-                const res = await fetch('http://127.0.0.1:5000/api/admin/dashboard');
+                const res = await fetch('https://smart-canteen-system-hvah.onrender.com/api/admin/dashboard');
                 const data = await res.json();
                 if (data.today) {
                     document.getElementById('stat-revenue').innerText = `₹${data.today.total_revenue.toFixed(2)}`;
@@ -346,7 +346,7 @@
             }
             
             try {
-                const res = await fetch(`http://127.0.0.1:5000/api/orders/${id}/status`, {
+                const res = await fetch(`https://smart-canteen-system-hvah.onrender.com/api/orders/${id}/status`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status: val })
@@ -466,7 +466,7 @@
             else periodHead.innerText = 'Month';
 
             try {
-                const res = await fetch('http://127.0.0.1:5000/api/admin/dashboard');
+                const res = await fetch('https://smart-canteen-system-hvah.onrender.com/api/admin/dashboard');
                 const data = await res.json();
                 
                 if (data.monthly_sales && data.daily_sales && data.weekly_sales) {
@@ -615,7 +615,7 @@
 
         async function fetchCanteenHours() {
             try {
-                const res = await fetch('http://127.0.0.1:5000/api/settings');
+                const res = await fetch('https://smart-canteen-system-hvah.onrender.com/api/settings');
                 if (res.ok) {
                     const data = await res.json();
                     if (data.settings) {
@@ -634,7 +634,7 @@
             if (!open || !close) { alert('Please meticulously select both opening and closing times.'); return; }
             
             try {
-                const res = await fetch('http://127.0.0.1:5000/api/settings', {
+                const res = await fetch('https://smart-canteen-system-hvah.onrender.com/api/settings', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ settings: { opening_time: open, closing_time: close } })
@@ -656,7 +656,7 @@
             fetchCanteenHours();
             
             // Critical Fix: Admin portal must fetch the menu straight from the DB API instead of relying on a potentially stale or empty state JS reference.
-            fetch('http://127.0.0.1:5000/api/menu')
+            fetch('https://smart-canteen-system-hvah.onrender.com/api/menu')
                 .then(res => res.json())
                 .then(data => {
                     if (data.menu) {

@@ -76,7 +76,7 @@ window.updateOrderStatus = function(orderId, newStatus) {
         
         // Update backend if it has an actual id
         if (orders[index].actualId) {
-            fetch(`http://127.0.0.1:5000/api/orders/${orders[index].actualId}/status`, {
+            fetch(`https://smart-canteen-system-hvah.onrender.com/api/orders/${orders[index].actualId}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })
@@ -115,7 +115,7 @@ window.getAdminMenu = function() {
 
 window.addMenuItem = async function(item) {
     try {
-        const res = await fetch('http://127.0.0.1:5000/api/menu', {
+        const res = await fetch('https://smart-canteen-system-hvah.onrender.com/api/menu', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(item)
@@ -140,7 +140,7 @@ window.addMenuItem = async function(item) {
 
 window.updateMenuItem = async function(id, updates) {
     try {
-        await fetch(`http://127.0.0.1:5000/api/menu/${id}`, {
+        await fetch(`https://smart-canteen-system-hvah.onrender.com/api/menu/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updates)
@@ -162,7 +162,7 @@ window.updateMenuItem = async function(id, updates) {
 
 window.deleteMenuItem = async function(id) {
     try {
-        await fetch(`http://127.0.0.1:5000/api/menu/${id}`, {
+        await fetch(`https://smart-canteen-system-hvah.onrender.com/api/menu/${id}`, {
             method: 'DELETE'
         });
     } catch(err) {

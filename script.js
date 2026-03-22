@@ -64,7 +64,7 @@ window.canteenHours = { open: '09:00', close: '18:00' };
 
 async function fetchCanteenHours() {
     try {
-        const res = await fetch('http://127.0.0.1:5000/api/settings');
+        const res = await fetch('https://smart-canteen-system-hvah.onrender.com/api/settings');
         if (res.ok) {
             const data = await res.json();
             if (data.settings && data.settings.opening_time) {
@@ -262,7 +262,7 @@ window.confirmPayment = async function() {
 window.checkoutWithRazorpay = async function(totalAmount, orderItems) {
     try {
         // 1. Create Order backend Razorpay Gateway mapping
-        const response = await fetch('http://127.0.0.1:5000/api/razorpay/create_order', {
+        const response = await fetch('https://smart-canteen-system-hvah.onrender.com/api/razorpay/create_order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ amount: totalAmount })
@@ -306,7 +306,7 @@ window.checkoutWithRazorpay = async function(totalAmount, orderItems) {
 
 async function finalizeCanteenOrder(orderItems, total) {
     try {
-        const response = await fetch('http://127.0.0.1:5000/api/orders', {
+        const response = await fetch('https://smart-canteen-system-hvah.onrender.com/api/orders', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

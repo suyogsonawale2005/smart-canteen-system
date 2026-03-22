@@ -15,6 +15,13 @@ db_config = {
     'port': int(os.getenv('DB_PORT', 3307))
 }
 
+@app.route('/')
+def home():
+    return jsonify({
+        "status": "Smart Canteen API is Running Perfectly!",
+        "message": "Render is online. Please setup DB_HOST environment variables to activate full database connection."
+    }), 200
+
 def get_db_connection():
     try:
         conn = mysql.connector.connect(**db_config)
