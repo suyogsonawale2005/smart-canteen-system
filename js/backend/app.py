@@ -8,11 +8,11 @@ CORS(app)  # Enable CORS for all routes so frontend can connect
 
 # Database configuration dynamically pulled from Render Environment or fallback to Local
 db_config = {
-    'host': os.getenv('DB_HOST', 'localhost'),
-    'user': os.getenv('DB_USER', 'root'),
-    'password': os.getenv('DB_PASS', ''),
-    'database': os.getenv('DB_NAME', 'canteen_db'),
-    'port': int(os.getenv('DB_PORT', 3307))
+    'host': os.getenv('MYSQLHOST', os.getenv('DB_HOST', 'localhost')),
+    'user': os.getenv('MYSQLUSER', os.getenv('DB_USER', 'root')),
+    'password': os.getenv('MYSQLPASSWORD', os.getenv('DB_PASS', '')),
+    'database': os.getenv('MYSQLDATABASE', os.getenv('DB_NAME', 'canteen_db')),
+    'port': int(os.getenv('MYSQLPORT', os.getenv('DB_PORT', 3307)))
 }
 
 @app.route('/')
