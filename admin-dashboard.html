@@ -78,13 +78,43 @@
         <div class="admin-section animate-fade-in">
             <h2 style="margin-bottom:1.5rem;"><i class="fa-solid fa-clock" style="color:var(--primary);"></i> Canteen Operating Hours</h2>
             <div style="background:var(--background); padding:1.5rem; border-radius:var(--radius-md); display:flex; gap:1.5rem; align-items:center; flex-wrap:wrap;">
-                <div style="flex:1; min-width:200px;">
-                    <label class="form-label">Opening Time</label>
-                    <input type="time" id="canteen-open" class="form-input">
+                <div style="flex:1; min-width:250px;">
+                    <label class="form-label" style="display: block; margin-bottom: 0.5rem;">Opening Time</label>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <select id="open-h" class="form-input" style="padding:0.6rem; width:6rem;">
+                            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                            <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+                            <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+                            <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+                        </select> :
+                        <select id="open-m" class="form-input" style="padding:0.6rem; width:6rem;">
+                            <option value="00">00</option><option value="15">15</option>
+                            <option value="30">30</option><option value="45">45</option>
+                        </select>
+                        <select id="open-ampm" class="form-input" style="padding:0.6rem; width:6rem;">
+                            <option value="AM">AM</option>
+                            <option value="PM">PM</option>
+                        </select>
+                    </div>
                 </div>
-                <div style="flex:1; min-width:200px;">
-                    <label class="form-label">Closing Time</label>
-                    <input type="time" id="canteen-close" class="form-input">
+                <div style="flex:1; min-width:250px;">
+                    <label class="form-label" style="display: block; margin-bottom: 0.5rem;">Closing Time</label>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <select id="close-h" class="form-input" style="padding:0.6rem; width:6rem;">
+                            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                            <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+                            <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+                            <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+                        </select> :
+                        <select id="close-m" class="form-input" style="padding:0.6rem; width:6rem;">
+                            <option value="00">00</option><option value="15">15</option>
+                            <option value="30">30</option><option value="45">45</option>
+                        </select>
+                        <select id="close-ampm" class="form-input" style="padding:0.6rem; width:6rem;">
+                            <option value="AM">AM</option>
+                            <option value="PM">PM</option>
+                        </select>
+                    </div>
                 </div>
                 <div style="display:flex; align-items:flex-end;">
                     <button class="btn btn-primary" style="margin-top:auto;" onclick="saveCanteenHours()">
@@ -218,16 +248,42 @@
         // Secure Admin check
         if (typeof window.requireAdmin === 'function') requireAdmin();
 
+        async function fetchAdminOrders() {
+            try {
+                const res = await fetch('http://127.0.0.1:5000/api/admin/orders');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.orders) {
+                        return data.orders.map(o => ({
+                            id: o.order_id,
+                            time: o.order_date,
+                            userName: o.customer_name,
+                            userType: o.customer_type,
+                            items: o.items.map(i => ({ name: i.item_name, qty: i.quantity, price: i.price })),
+                            total: o.total_amount,
+                            status: o.status
+                        }));
+                    }
+                }
+            } catch (err) {}
+            return [];
+        }
+
         async function renderAdminDashboard() {
-            const orders = window.getAllOrders ? window.getAllOrders() : [];
             const oosCount = JSON.parse(localStorage.getItem('canteen_out_of_stock') || '[]').length;
+            
+            let orders = await fetchAdminOrders();
+            if (orders.length === 0 && window.getAllOrders) {
+                // Fallback to local storage if DB is entirely empty or unavailable
+                orders = window.getAllOrders();
+            }
             
             try {
                 const res = await fetch('http://127.0.0.1:5000/api/admin/dashboard');
                 const data = await res.json();
-                if (data.overall) {
-                    document.getElementById('stat-revenue').innerText = `₹${data.overall.total_revenue.toFixed(2)}`;
-                    document.getElementById('stat-orders').innerText = data.overall.total_orders;
+                if (data.today) {
+                    document.getElementById('stat-revenue').innerText = `₹${data.today.total_revenue.toFixed(2)}`;
+                    document.getElementById('stat-orders').innerText = data.today.total_orders;
                 }
             } catch (err) {
                 // Fallback to local
@@ -282,8 +338,23 @@
             }
         }
 
-        window.handleStatusChange = function(id, val) {
-            if (window.updateOrderStatus(id, val)) renderAdminDashboard();
+        window.handleStatusChange = async function(id, val) {
+            // Check if this is a fallback local order (e.g. "ORD-1234") or a real DB order (e.g "5")
+            if (String(id).startsWith('ORD-') && window.updateOrderStatus) {
+                if (window.updateOrderStatus(id, val)) renderAdminDashboard();
+                return;
+            }
+            
+            try {
+                const res = await fetch(`http://127.0.0.1:5000/api/orders/${id}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: val })
+                });
+                if (res.ok) renderAdminDashboard();
+            } catch(e) {
+                console.error("Failed to update status", e);
+            }
         }
 
         window.handleStockToggle = function(name) {
@@ -508,15 +579,48 @@
             document.getElementById('monthly-total-revenue').innerText = `₹${totRev.toFixed(2)}`;
         }
 
-        // ---- Canteen Settings ----
+        // ---- Canteen Settings 12hr UI logic ----
+        function set12HourSelects(timeStr, prefix) {
+            if(!timeStr || !timeStr.includes(':')) return;
+            let [h, m] = timeStr.split(':');
+            let hour = parseInt(h, 10) || 0;
+            let ampm = hour >= 12 ? 'PM' : 'AM';
+            hour = hour % 12;
+            if (hour === 0) hour = 12;
+            
+            // Round minute safely down to match option buckets if slightly off
+            let nearestMin = (Math.round(parseInt(m, 10) / 15) * 15) % 60;
+            let minStr = nearestMin === 0 ? '00' : '' + nearestMin;
+
+            document.getElementById(prefix + '-h').value = hour;
+            document.getElementById(prefix + '-m').value = minStr;
+            document.getElementById(prefix + '-ampm').value = ampm;
+        }
+
+        function get24HourFromSelects(prefix) {
+            let hObj = document.getElementById(prefix + '-h');
+            let mObj = document.getElementById(prefix + '-m');
+            let amObj = document.getElementById(prefix + '-ampm');
+            if(!hObj || !mObj || !amObj) return null;
+            
+            let h = parseInt(hObj.value, 10);
+            let m = mObj.value;
+            let ampm = amObj.value;
+            
+            if (ampm === 'PM' && h !== 12) h += 12;
+            if (ampm === 'AM' && h === 12) h = 0;
+            
+            return (h < 10 ? '0'+h : h) + ':' + m;
+        }
+
         async function fetchCanteenHours() {
             try {
                 const res = await fetch('http://127.0.0.1:5000/api/settings');
                 if (res.ok) {
                     const data = await res.json();
                     if (data.settings) {
-                        document.getElementById('canteen-open').value = data.settings.opening_time || '09:00';
-                        document.getElementById('canteen-close').value = data.settings.closing_time || '18:00';
+                        set12HourSelects(data.settings.opening_time || '09:00', 'open');
+                        set12HourSelects(data.settings.closing_time || '18:00', 'close');
                     }
                 }
             } catch (err) {
@@ -525,9 +629,9 @@
         }
 
         async function saveCanteenHours() {
-            const open = document.getElementById('canteen-open').value;
-            const close = document.getElementById('canteen-close').value;
-            if (!open || !close) { alert('Please select both opening and closing times.'); return; }
+            const open = get24HourFromSelects('open');
+            const close = get24HourFromSelects('close');
+            if (!open || !close) { alert('Please meticulously select both opening and closing times.'); return; }
             
             try {
                 const res = await fetch('http://127.0.0.1:5000/api/settings', {
@@ -550,7 +654,29 @@
             renderAdminDashboard();
             renderSalesReport();
             fetchCanteenHours();
-            if (typeof renderMenuManagement === 'function') renderMenuManagement();
+            
+            // Critical Fix: Admin portal must fetch the menu straight from the DB API instead of relying on a potentially stale or empty state JS reference.
+            fetch('http://127.0.0.1:5000/api/menu')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.menu) {
+                        window.menuItems = data.menu.map(item => ({
+                            id: item.item_id,
+                            name: item.item_name,
+                            price: item.price,
+                            type: (item.type || 'veg').toLowerCase(),
+                            category: item.category,
+                            img: item.image_url,
+                            desc: item.item_name + ' - ' + (item.category || 'Delicious food')
+                        }));
+                    }
+                    if (typeof renderMenuManagement === 'function') renderMenuManagement();
+                })
+                .catch(err => {
+                    console.error("Failed to load backend DB menu for Admin! Using local cache.", err);
+                    if (typeof renderMenuManagement === 'function') renderMenuManagement();
+                });
+            
         });
     </script>
     <script src="script.js"></script>

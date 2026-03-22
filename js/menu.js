@@ -116,6 +116,7 @@ function renderMenu(category = currentCategory, type = currentType, searchQuery 
 
         // Image URL: from item.img if available and valid
         let dynamicImgUrl = item.img;
+        
         if (!dynamicImgUrl || dynamicImgUrl.trim() === '' || dynamicImgUrl === 'null') {
             // Default images by category if missing
             const cat = (item.category || '').toLowerCase();

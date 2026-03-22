@@ -108,17 +108,9 @@ window.cancelOrder = function(orderId) {
 
 // ---- Menu CRUD API ----
 
-// Get the live menu (from localStorage if admin has customised it, else use default)
 window.getAdminMenu = function() {
-    const stored = localStorage.getItem('canteen_menu');
-    if (stored) return JSON.parse(stored);
-    
-    // Fallback to window.menuItems (from menu.js)
-    if (window.menuItems && window.menuItems.length > 0) {
-        localStorage.setItem('canteen_menu', JSON.stringify(window.menuItems));
-        return window.menuItems;
-    }
-    return [];
+    // Rely strictly on the globally fetched active menu from the Python DB API.
+    return window.menuItems || [];
 };
 
 window.addMenuItem = async function(item) {

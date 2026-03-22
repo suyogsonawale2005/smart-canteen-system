@@ -7,6 +7,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Razorpay Checkout JS -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
     <!-- Header -->
@@ -125,17 +128,7 @@
                             </div>
                         </label>
 
-                        <!-- Card -->
-                        <label class="payment-option" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border: 2px solid var(--border); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;">
-                            <input type="radio" name="payment-method" value="card" style="accent-color: var(--primary); width: 18px; height: 18px;">
-                            <div style="background: #6366f1; border-radius: 8px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                <i class="fa-solid fa-credit-card" style="color: white;"></i>
-                            </div>
-                            <div>
-                                <div style="font-weight: 600;">Debit / Credit Card</div>
-                                <div style="font-size: 0.8rem; color: var(--text-muted);">Visa, Mastercard, RuPay</div>
-                            </div>
-                        </label>
+
 
                         <!-- Cash -->
                         <label class="payment-option" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border: 2px solid var(--border); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;">
@@ -150,11 +143,7 @@
                         </label>
                     </div>
 
-                    <!-- UPI ID input (shows when UPI selected) -->
-                    <div id="upi-input-section" style="margin-bottom: 1.5rem;">
-                        <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">UPI ID</label>
-                        <input type="text" id="upi-id" class="form-input" placeholder="yourname@upi" style="margin-top: 0.4rem;">
-                    </div>
+
 
                     <!-- Buttons -->
                     <div style="display: flex; gap: 1rem;">

@@ -235,14 +235,7 @@ window.confirmPayment = async function() {
     const method = document.querySelector('input[name="payment-method"]:checked');
     if (!method) return;
 
-    // If UPI, validate UPI ID format
-    if (method.value === 'upi') {
-        const upiId = document.getElementById('upi-id').value.trim();
-        if (!/^[\w.-]+@[\w]+$/.test(upiId)) {
-            alert('❌ Please enter a valid UPI ID (e.g. name@upi or name@okaxis)');
-            return;
-        }
-    }
+
 
     if (!currentUser || !currentUser.customer_id) {
         alert('❌ Error: Please ensure you are logged in to place an order.');
@@ -254,7 +247,64 @@ window.confirmPayment = async function() {
         quantity: item.qty,
         price: item.price
     }));
+    
+    const total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
 
+    // If method is cash, bypass Razorpay and place order immediately
+    if (method.value === 'cash') {
+        finalizeCanteenOrder(orderItems, total);
+    } else {
+        // Trigger Razorpay for UPI and Card
+        checkoutWithRazorpay(total, orderItems);
+    }
+};
+
+window.checkoutWithRazorpay = async function(totalAmount, orderItems) {
+    try {
+        // 1. Create Order backend Razorpay Gateway mapping
+        const response = await fetch('http://127.0.0.1:5000/api/razorpay/create_order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: totalAmount })
+        });
+        
+        const data = await response.json();
+        if (data.status === 'success') {
+            const options = {
+                // TEST API KEY INJECTED
+                "key": "rzp_test_SUDIa8UBhPN8rS", 
+                "amount": data.amount,
+                "currency": data.currency,
+                "name": "Smart Canteen",
+                "description": "Student Food Order",
+                "order_id": data.razorpay_order_id,
+                "handler": function (response) {
+                    // Payment successful! Complete order insert
+                    alert("Payment Successful! Tracking ID: " + response.razorpay_payment_id);
+                    finalizeCanteenOrder(orderItems, totalAmount);
+                },
+                "prefill": {
+                    "name": currentUser.name || "Student",
+                    "email": currentUser.email || "student@example.com",
+                    "contact": currentUser.phone_no || "9999999999"
+                },
+                "theme": { "color": "#e85d04" }
+            };
+            const rzp = new Razorpay(options);
+            rzp.on('payment.failed', function (response){
+                alert("Payment Failed. Reason: " + response.error.description);
+            });
+            rzp.open();
+        } else {
+            alert("Error initializing payment gateway.");
+        }
+    } catch(err) {
+        console.error("Razorpay error", err);
+        alert("Payment gateway failed to start.");
+    }
+};
+
+async function finalizeCanteenOrder(orderItems, total) {
     try {
         const response = await fetch('http://127.0.0.1:5000/api/orders', {
             method: 'POST',
@@ -269,10 +319,7 @@ window.confirmPayment = async function() {
         if (!response.ok) throw new Error(data.error || 'Failed to place order');
 
         // Finalize the order locally for backup / UI display
-        const total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
         let placedOrder = null;
-        
-        // Ensure local list also updates with the real order ID
         if (data.order_id) {
            placedOrder = window.placeNewOrder(currentUser, total, cart, data.order_id);
         } else {

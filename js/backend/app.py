@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import mysql.connector
@@ -5,14 +6,13 @@ import mysql.connector
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes so frontend can connect
 
-# Database configuration
-# Update 'password' if your XAMPP MySQL root user has a password. Usually it's empty.
+# Database configuration dynamically pulled from Render Environment or fallback to Local
 db_config = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': '',
-    'database': 'canteen_db',
-    'port': 3307
+    'host': os.getenv('DB_HOST', 'localhost'),
+    'user': os.getenv('DB_USER', 'root'),
+    'password': os.getenv('DB_PASS', ''),
+    'database': os.getenv('DB_NAME', 'canteen_db'),
+    'port': int(os.getenv('DB_PORT', 3307))
 }
 
 def get_db_connection():
@@ -240,9 +240,43 @@ def manage_menu_item(item_id):
             cursor.close()
             conn.close()
 
+import razorpay
+
+# Initialize the Razorpay client with TEST Keys (Safe for Localhost)
+razorpay_client = razorpay.Client(auth=("rzp_test_SUDIa8UBhPN8rS", "vp3M75Yrxxah9xZNdfGpScG5"))
+
 # ==========================================
-# 5. Order API
+# 5. Order API & Payment Gateway
 # ==========================================
+@app.route('/api/razorpay/create_order', methods=['POST'])
+def create_razorpay_order():
+    try:
+        data = request.json
+        amount_in_rupees = data.get('amount')
+        
+        # Razorpay processes money in 'paisa' (smallest denomination)
+        # So multiply your Rupee total by 100
+        amount_in_paisa = int(amount_in_rupees * 100)
+        
+        order_data = {
+            "amount": amount_in_paisa,
+            "currency": "INR",
+            "payment_capture": 1 # Auto capture payment
+        }
+        
+        # This talks to Razorpay's servers
+        payment_order = razorpay_client.order.create(data=order_data)
+        
+        return jsonify({
+            "status": "success",
+            "razorpay_order_id": payment_order['id'],
+            "amount": payment_order['amount'],
+            "currency": payment_order['currency']
+        }), 200
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
 @app.route('/api/orders', methods=['POST'])
 def place_order():
     data = request.json
@@ -304,6 +338,46 @@ def update_order_status(order_id):
         cursor.close()
         conn.close()
 
+@app.route('/api/admin/orders', methods=['GET'])
+def get_admin_orders():
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"error": "Database connection failed"}), 500
+
+    cursor = conn.cursor(dictionary=True)
+    try:
+        # Fetch all orders with customer details
+        cursor.execute("""
+            SELECT o.order_id, o.order_date, o.total_amount, o.status, o.prep_time,
+                   c.name as customer_name, c.customer_type
+            FROM orders o
+            JOIN customers c ON o.customer_id = c.customer_id
+            ORDER BY o.order_date DESC
+        """)
+        orders = cursor.fetchall()
+        
+        # Fetch items for each order
+        for order in orders:
+            order['total_amount'] = float(order['total_amount'])
+            order['order_date'] = str(order['order_date'])
+            cursor.execute("""
+                SELECT oi.quantity, m.item_name, m.price
+                FROM order_items oi
+                JOIN menu m ON oi.item_id = m.item_id
+                WHERE oi.order_id = %s
+            """, (order['order_id'],))
+            items = cursor.fetchall()
+            for item in items:
+                item['price'] = float(item['price'])
+            order['items'] = items
+            
+        return jsonify({"orders": orders}), 200
+    except mysql.connector.Error as err:
+        return jsonify({"error": str(err)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
 # ==========================================
 # 6. Admin Dashboard APIs (Sales Data)
 # ==========================================
@@ -315,7 +389,7 @@ def get_dashboard_data():
 
     cursor = conn.cursor(dictionary=True)
     try:
-        # 1. Overall totals
+        # 1. Overall totals and Today's totals
         cursor.execute("""
             SELECT 
                 COUNT(*) AS total_orders, 
@@ -324,6 +398,16 @@ def get_dashboard_data():
         """)
         overall = cursor.fetchone()
         overall['total_revenue'] = float(overall['total_revenue'])
+        
+        cursor.execute("""
+            SELECT 
+                COUNT(*) AS total_orders, 
+                IFNULL(SUM(CASE WHEN status = 'delivered' THEN total_amount ELSE 0 END), 0) AS total_revenue 
+            FROM orders
+            WHERE DATE(order_date) = CURDATE()
+        """)
+        today = cursor.fetchone()
+        today['total_revenue'] = float(today['total_revenue'])
 
         # 2. Daily Sales (last 7 days grouped by date)
         cursor.execute("""
@@ -373,6 +457,7 @@ def get_dashboard_data():
             
         return jsonify({
             "overall": overall,
+            "today": today,
             "daily_sales": daily_sales,
             "weekly_sales": weekly_sales,
             "monthly_sales": monthly_sales
