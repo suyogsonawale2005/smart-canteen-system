@@ -382,11 +382,35 @@ window.toggleOrdersList = function() {
     }
 }
 
-function renderOrdersList() {
+async function renderOrdersList() {
     const container = document.getElementById('orders-list');
     if (!container) return;
     
-    const orders = window.getUserOrders(currentUser.email);
+    let orders = [];
+    try {
+        if (currentUser && currentUser.customer_id) {
+            const res = await fetch(`https://smart-canteen-system-hvah.onrender.com/api/orders/user/${currentUser.customer_id}`);
+            if (res.ok) {
+                const data = await res.json();
+                orders = (data.orders || []).map(o => ({
+                    id: o.order_id,
+                    time: o.order_date, // This comes out of new Python API as UTC string securely!
+                    status: o.status,
+                    total: o.total_amount,
+                    items: o.items.map(i => ({ name: i.name, qty: i.quantity, price: i.price })),
+                    prepTime: o.prep_time
+                }));
+            }
+        }
+    } catch(err) {
+        console.error("Failed to fetch live student orders", err);
+    }
+    
+    if (orders.length === 0) {
+        // Fallback to local storage if DB is entirely blank/offline
+        orders = window.getUserOrders(currentUser.email);
+    }
+    
     if (orders.length === 0) {
         container.innerHTML = `<div style="text-align: center; padding: 2rem;"><i class="fa-solid fa-receipt" style="font-size: 3rem; color: var(--border); margin-bottom:1rem;"></i><p>No orders yet. Start craving!</p></div>`;
         return;
@@ -397,7 +421,8 @@ function renderOrdersList() {
             'pending': '#f97316',
             'preparing': '#fbbf24',
             'ready': '#10b981',
-            'delivered': '#78350f'
+            'delivered': '#78350f',
+            'cancelled': '#333333'
         };
         const statusIcons = {
             'pending': 'fa-clock',

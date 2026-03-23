@@ -105,34 +105,8 @@ def student_login():
 # ==========================================
 @app.route('/api/signup/admin', methods=['POST'])
 def admin_signup():
-    data = request.json
-    name = data.get('name')
-    phone_no = data.get('phone_no')
-    email = data.get('email')
-    password = data.get('password')
-
-    if not all([name, email, password]):
-        return jsonify({"error": "Missing required fields (name, email or password)"}), 400
-
-    conn = get_db_connection()
-    if not conn:
-        return jsonify({"error": f"Database connection failed: {last_db_error}"}), 500
-
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            "INSERT INTO admin (name, phone_no, email, password) VALUES (%s, %s, %s, %s)", 
-            (name, phone_no, email, password)
-        )
-        conn.commit()
-        return jsonify({"message": "Admin signup successful", "admin_id": cursor.lastrowid}), 201
-    except mysql.connector.Error as err:
-        if err.errno == 1062: # Duplicate entry error code for MySQL
-            return jsonify({"error": "Admin email already exists"}), 409
-        return jsonify({"error": str(err)}), 500
-    finally:
-        cursor.close()
-        conn.close()
+    # SECURITY LOCKDOWN: Prevent students from hitting the API to create unauthorized admin accounts
+    return jsonify({"error": "Admin signup is strictly disabled for security. Please create admin accounts manually inside MySQL Workbench using your Railway DB credentials."}), 403
 
 @app.route('/api/login/admin', methods=['POST'])
 def admin_login():
@@ -344,6 +318,45 @@ def update_order_status(order_id):
         cursor.execute("UPDATE orders SET status=%s WHERE order_id=%s", (new_status, order_id))
         conn.commit()
         return jsonify({"message": "Order status updated successfully"}), 200
+    except mysql.connector.Error as err:
+        return jsonify({"error": str(err)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/orders/user/<int:customer_id>', methods=['GET'])
+def get_user_orders(customer_id):
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"error": f"Database connection failed: {last_db_error}"}), 500
+
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT order_id, order_date, total_amount, status, prep_time
+            FROM orders
+            WHERE customer_id = %s
+            ORDER BY order_date DESC
+        """, (customer_id,))
+        orders = cursor.fetchall()
+        
+        for order in orders:
+            order['total_amount'] = float(order['total_amount'])
+            # Append Z to let the frontend know this time is from Railway's UTC clock
+            order['order_date'] = str(order['order_date']).replace(' ', 'T') + "Z"
+            
+            cursor.execute("""
+                SELECT oi.quantity, m.item_name as name, m.price
+                FROM order_items oi
+                JOIN menu m ON oi.item_id = m.item_id
+                WHERE oi.order_id = %s
+            """, (order['order_id'],))
+            items = cursor.fetchall()
+            for item in items:
+                item['price'] = float(item['price'])
+            order['items'] = items
+            
+        return jsonify({"orders": orders}), 200
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500
     finally:
