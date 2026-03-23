@@ -482,11 +482,24 @@ async function renderOrdersList() {
     }).join('');
 }
 
-window.handleCancelOrder = function(orderId) {
-    if (confirm("Are you sure you want to cancel this order?")) {
-        if (window.cancelOrder(orderId)) {
-            renderOrdersList();
-            showToast("Order Cancelled!");
+window.handleCancelOrder = async function(orderId) {
+    if (confirm("Are you sure you want to cancel this order? It cannot be undone.")) {
+        try {
+            const res = await fetch(`https://smart-canteen-system-hvah.onrender.com/api/orders/${orderId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'cancelled' })
+            });
+            
+            if (res.ok) {
+                showToast("Order Cancelled successfully!");
+                renderOrdersList(); // refresh UI directly from live DB
+            } else {
+                alert("Failed to cancel the order. It might already be preparing!");
+            }
+        } catch(err) {
+            console.error(err);
+            alert("Network error. Could not cancel order right now.");
         }
     }
 }
