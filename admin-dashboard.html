@@ -57,11 +57,11 @@
     <main class="container admin-main">
         <div class="stats-grid animate-fade-in">
             <div class="stat-card">
-                <div class="stat-label">Total Revenue</div>
+                <div class="stat-label">Today's Revenue</div>
                 <div class="stat-val" id="stat-revenue">₹0.00</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Total Orders</div>
+                <div class="stat-label">Today's Delivered Orders</div>
                 <div class="stat-val" id="stat-orders">0</div>
             </div>
             <div class="stat-card" style="border-color: var(--success);">
@@ -461,7 +461,7 @@
         async function renderSalesReport() {
             const reportType = document.getElementById('report-type-filter').value;
             const periodHead = document.getElementById('report-period-head');
-            if(reportType === 'daily') periodHead.innerText = 'Date';
+            if(reportType === 'daily') periodHead.innerText = 'Today';
             else if(reportType === 'weekly') periodHead.innerText = 'Week';
             else periodHead.innerText = 'Month';
 

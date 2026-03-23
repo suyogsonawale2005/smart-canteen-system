@@ -147,7 +147,7 @@ def manage_menu():
 
         cursor = conn.cursor(dictionary=True)
         try:
-            cursor.execute("SELECT * FROM menu")
+            cursor.execute("SELECT * FROM menu WHERE stock >= 0")
             menu_items = cursor.fetchall()
             for item in menu_items:
                 item['price'] = float(item['price'])
@@ -217,7 +217,8 @@ def manage_menu_item(item_id):
             
     elif request.method == 'DELETE':
         try:
-            cursor.execute("DELETE FROM menu WHERE item_id=%s", (item_id,))
+            # Soft delete instead of physical delete to preserve foreign key constraints for historical receipts
+            cursor.execute("UPDATE menu SET stock = -1 WHERE item_id=%s", (item_id,))
             conn.commit()
             return jsonify({"message": "Menu item deleted successfully"}), 200
         except mysql.connector.Error as err:
@@ -426,7 +427,7 @@ def get_dashboard_data():
         
         cursor.execute("""
             SELECT 
-                COUNT(*) AS total_orders, 
+                SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) AS total_orders, 
                 IFNULL(SUM(CASE WHEN status = 'delivered' THEN total_amount ELSE 0 END), 0) AS total_revenue 
             FROM orders
             WHERE DATE(order_date) = CURDATE()
@@ -439,7 +440,7 @@ def get_dashboard_data():
             SELECT 
                 DATE(order_date) as date, 
                 IFNULL(SUM(CASE WHEN status = 'delivered' THEN total_amount ELSE 0 END), 0) as daily_revenue,
-                COUNT(order_id) as total_orders
+                SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) as total_orders
             FROM orders 
             GROUP BY DATE(order_date) 
             ORDER BY date DESC 
