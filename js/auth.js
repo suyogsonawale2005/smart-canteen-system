@@ -15,7 +15,11 @@ function requireAuth() {
     const path = window.location.pathname;
     const page = path.split('/').pop();
 
-    const bypassPages = ['index.html', 'signup.html', 'admin.html', 'admin-signup.html', 'admin-dashboard.html', ''];
+    // Support both XAMPP local testing (.html) and Vercel production clean URLs
+    const bypassPages = [
+        'index.html', 'signup.html', 'admin.html', 'admin-signup.html', 'admin-dashboard.html', '',
+        'index', 'signup', 'admin', 'admin-signup', 'admin-dashboard'
+    ];
     const isBypassPage = bypassPages.includes(page);
 
     if (!user && !isBypassPage) {
@@ -30,7 +34,9 @@ function requireAdmin() {
     const path = window.location.pathname;
     const page = path.split('/').pop();
 
-    if (isAdmin !== 'true' && page === 'admin-dashboard.html') {
+    const isDashboard = (page === 'admin-dashboard.html' || page === 'admin-dashboard');
+
+    if (isAdmin !== 'true' && isDashboard) {
         window.location.href = 'admin.html';
         return false;
     }
