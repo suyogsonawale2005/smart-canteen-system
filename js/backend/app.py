@@ -435,51 +435,52 @@ def get_dashboard_data():
         today = cursor.fetchone()
         today['total_revenue'] = float(today['total_revenue'])
 
-        # 2. Daily Sales (last 7 days grouped by date)
+        # 2. Daily Sales - only TODAY, broken down by hour
         cursor.execute("""
             SELECT 
                 DATE(order_date) as date, 
                 IFNULL(SUM(CASE WHEN status = 'delivered' THEN total_amount ELSE 0 END), 0) as daily_revenue,
                 SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) as total_orders
             FROM orders 
-            GROUP BY DATE(order_date) 
-            ORDER BY date DESC 
-            LIMIT 7
+            WHERE DATE(order_date) = CURDATE()
+            GROUP BY DATE(order_date)
         """)
         daily_sales = cursor.fetchall()
         for d in daily_sales:
             d['daily_revenue'] = float(d['daily_revenue'])
-            d['date'] = str(d['date']) # Format date for JSON
+            d['date'] = str(d['date'])
 
-        # 3. Weekly Sales (last 4 weeks)
+        # 3. Weekly Sales - only THIS current week (Mon to today)
         cursor.execute("""
             SELECT 
-                YEARWEEK(order_date) as week, 
+                DATE(order_date) as week,
                 IFNULL(SUM(CASE WHEN status = 'delivered' THEN total_amount ELSE 0 END), 0) as weekly_revenue,
-                COUNT(order_id) as total_orders
+                SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) as total_orders
             FROM orders 
-            GROUP BY YEARWEEK(order_date) 
-            ORDER BY week DESC 
-            LIMIT 4
+            WHERE YEARWEEK(order_date, 1) = YEARWEEK(CURDATE(), 1)
+            GROUP BY DATE(order_date)
+            ORDER BY week ASC
         """)
         weekly_sales = cursor.fetchall()
         for w in weekly_sales:
             w['weekly_revenue'] = float(w['weekly_revenue'])
+            w['week'] = str(w['week'])
 
-        # 4. Monthly Sales (last 12 months)
+        # 4. Monthly Sales - only THIS current month, broken down by day
         cursor.execute("""
             SELECT 
-                DATE_FORMAT(order_date, '%Y-%m') as month, 
+                DATE(order_date) as month,
                 IFNULL(SUM(CASE WHEN status = 'delivered' THEN total_amount ELSE 0 END), 0) as monthly_revenue,
-                COUNT(order_id) as total_orders
+                SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) as total_orders
             FROM orders 
-            GROUP BY DATE_FORMAT(order_date, '%Y-%m') 
-            ORDER BY month DESC 
-            LIMIT 12
+            WHERE MONTH(order_date) = MONTH(CURDATE()) AND YEAR(order_date) = YEAR(CURDATE())
+            GROUP BY DATE(order_date)
+            ORDER BY month ASC
         """)
         monthly_sales = cursor.fetchall()
         for m in monthly_sales:
             m['monthly_revenue'] = float(m['monthly_revenue'])
+            m['month'] = str(m['month'])
             
         return jsonify({
             "overall": overall,
