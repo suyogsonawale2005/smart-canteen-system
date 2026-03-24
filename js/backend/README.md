@@ -34,7 +34,7 @@ A web-based canteen management system that allows students to order food online 
 - admin
 - menu
 - orders
-- order_items
+- bill
 
 ---
 
