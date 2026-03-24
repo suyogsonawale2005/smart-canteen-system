@@ -140,7 +140,7 @@ function renderMenu(category = currentCategory, type = currentType, searchQuery 
         card.innerHTML = `
             <div class="food-img-wrapper" style="${outOfStock ? 'filter: grayscale(1); opacity: 0.6;' : ''}">
                 ${badgeHTML}
-                <img src="${dynamicImgUrl}" alt="${item.name}" loading="lazy">
+                <img src="${dynamicImgUrl}" alt="${item.name}" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=80';">
             </div>
             <div class="food-details">
                 <h3 class="food-title">${item.name}</h3>

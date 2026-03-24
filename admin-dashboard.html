@@ -364,6 +364,27 @@
         }
 
         // ---- Menu Management ----
+        async function fetchAndRenderMenu() {
+            try {
+                const res = await fetch('https://smart-canteen-system-hvah.onrender.com/api/menu');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.menu) {
+                        window.menuItems = data.menu.map(item => ({
+                            id: item.item_id,
+                            name: item.item_name,
+                            price: item.price,
+                            type: (item.type || 'veg').toLowerCase(),
+                            category: item.category,
+                            img: item.image_url,
+                            desc: item.description || ''
+                        }));
+                    }
+                }
+            } catch(e) { console.error('Menu fetch error', e); }
+            renderMenuManagement();
+        }
+
         function renderMenuManagement() {
             let menu = window.getAdminMenu ? window.getAdminMenu() : (window.menuItems || []);
             
@@ -410,8 +431,8 @@
             if (!name || !price) { alert('Name and Price are required!'); return; }
             await window.addMenuItem({ name, price, type, category, img, desc });
             ['new-name','new-price','new-img','new-desc'].forEach(id => document.getElementById(id).value = '');
-            renderMenuManagement();
-            alert(`✅ "${name}" added to menu!`);
+            await fetchAndRenderMenu(); // re-fetch live from DB
+            alert(`"${name}" added to menu!`);
         };
 
         window.openEditModal = function(id) {
@@ -452,7 +473,7 @@
             if (!item) return;
             if (!confirm(`Delete "${item.name}" from the menu? This cannot be undone.`)) return;
             await window.deleteMenuItem(id);
-            renderMenuManagement();
+            await fetchAndRenderMenu(); // re-fetch live from DB
         };
 
         // ---- Sales Reports ----
