@@ -1,11 +1,11 @@
 import mysql.connector
 
 db_config = {
-    'host': '127.0.0.1',
+    'host': 'caboose.proxy.rlwy.net',
     'user': 'root',
-    'password': '',
-    'port': 3307,
-    'database': 'canteen_db'
+    'password': 'zMOsIeHUtEPgdySxShWTmjpkZPxQfIoj',
+    'port': 32298,
+    'database': 'railway'
 }
 
 image_updates = {

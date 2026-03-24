@@ -1,7 +1,13 @@
 import mysql.connector
 
 try:
-    conn = mysql.connector.connect(host='127.0.0.1', user='root', password='', port=3307, database='canteen_db')
+    conn = mysql.connector.connect(
+        host='caboose.proxy.rlwy.net', 
+        user='root', 
+        password='zMOsIeHUtEPgdySxShWTmjpkZPxQfIoj', 
+        port=32298, 
+        database='railway'
+    )
     cursor = conn.cursor()
 
     mappings = {
