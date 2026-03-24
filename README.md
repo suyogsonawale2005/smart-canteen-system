@@ -1,240 +1,151 @@
 # Smart Canteen Management System
 
-A full-stack web application that digitizes the entire food ordering process of a college canteen — from student login and menu browsing to order tracking and admin sales reporting.
+A modern web application that completely digitalizes the food ordering process of a college canteen. Students can browse the menu, place orders, and track their food in real time — while the Admin can manage orders, update the menu, and view sales reports from a dedicated dashboard.
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
+| Layer | Technology Used |
+|-------|----------------|
 | Frontend | HTML, CSS, JavaScript |
-| Backend | Python (Flask) |
+| Backend | Python (Flask Framework) |
 | Database | MySQL |
-| Payment | Razorpay Gateway |
+| Payment | Razorpay Payment Gateway |
 
 ---
 
-## Project Structure
-
-```
-SCS/
-├── index.html              # Student login page
-├── signup.html             # Student registration page
-├── dashboard.html          # Student menu & order dashboard
-├── admin.html              # Admin login page
-├── admin-dashboard.html    # Admin control panel
-├── images/                 # Food item images
-├── css/                    # Stylesheets
-├── js/
-│   ├── auth.js             # Login / Signup / Logout logic
-│   ├── menu.js             # Fetches & renders menu from backend
-│   ├── state.js            # Cart, orders, local state management
-│   └── backend/
-│       ├── app.py          # Flask REST API (main backend)
-│       ├── database.sql    # MySQL schema + seed data
-│       └── requirements.txt
-└── script.js               # Dashboard interactions (cart, orders, payment)
-```
+## How the Project Works — Full Flow
 
 ---
 
-## System Flow — Frontend to Backend to Database
+### 1. Student Registration
 
-### 1. Student Registration & Login
-
-**Frontend → Backend → Database**
-
-1. Student opens `index.html` and fills in their Name, Email, and Password.
-2. `auth.js` sends a **POST** request to `/api/signup` on the Flask backend.
-3. Flask receives the data, validates it, and executes:
-   ```sql
-   INSERT INTO customers (name, customer_type, phone_no, email, password)
-   VALUES (...)
-   ```
-4. The new student record is saved in the `customers` table in MySQL.
-5. For login, `auth.js` sends a **POST** to `/api/login/student`. Flask queries:
-   ```sql
-   SELECT * FROM customers WHERE email = ? AND password = ?
-   ```
-6. If found, Flask returns the student's data. The browser saves it in `localStorage` and redirects to `dashboard.html`.
+When a new student visits the website, they are taken to the **Sign Up** page. They fill in their name, email, phone number, and password. This information is securely sent to the backend server, which saves it into the **Customers** table in the database. Once registered, the student can log in.
 
 ---
 
-### 2. Menu Display
+### 2. Student Login
 
-**Database → Backend → Frontend**
-
-1. When `dashboard.html` loads, `menu.js` sends a **GET** request to `/api/menu`.
-2. Flask executes:
-   ```sql
-   SELECT * FROM menu WHERE stock >= 0
-   ```
-   (Items with `stock = -1` are soft-deleted and hidden from students.)
-3. Flask returns a JSON list of all menu items (name, price, type, category, image).
-4. `menu.js` renders each item as a food card on the screen with filters (Veg/Non-Veg, Category).
+On the **Login** page, the student enters their email and password. The backend checks the database to verify if these credentials match an existing account. If they do, the student is granted access and redirected to their personal **Dashboard**.
 
 ---
 
-### 3. Cart & Order Placement
+### 3. Browsing the Menu
 
-**Frontend → Backend → Database**
+Once logged in, the student lands on the **Dashboard** which displays the full canteen menu. The menu is fetched live from the database every time the page loads — so any item added, edited, or removed by the Admin is instantly reflected for students.
 
-1. Student clicks the **`+`** button on a food card — `state.js` adds the item to the in-memory cart.
-2. Student clicks **Place Order** → a payment modal appears.
-3. Student selects **Cash at Counter** or **UPI**:
-   - **Cash:** `script.js` directly calls `finalizeCanteenOrder()`.
-   - **UPI:** `script.js` first calls `/api/razorpay/create_order` to get a Razorpay payment session. After payment success, it calls `finalizeCanteenOrder()`.
-4. `finalizeCanteenOrder()` sends a **POST** to `/api/orders` with:
-   ```json
-   { "customer_id": 5, "items": [{ "item_id": 1, "quantity": 2, "price": 20 }] }
-   ```
-5. Flask calculates the total, then inserts into two tables:
-   ```sql
-   INSERT INTO orders (customer_id, total_amount, status) VALUES (...)
-   INSERT INTO order_items (order_id, item_id, quantity, price) VALUES (...)
-   ```
-6. A success animation plays. The student can now track their order.
+Students can filter items by:
+- **Category** (Breakfast, Snacks, Chinese, Beverages, etc.)
+- **Type** (Veg or Non-Veg)
+- **Search** by name
 
 ---
 
-### 4. Student Order Tracking
+### 4. Adding Items to Cart & Placing Order
 
-**Database → Backend → Frontend (Live)**
+The student clicks the **+** button on any food item to add it to their cart. The cart shows a running total. When ready, the student clicks **Place Order**, which opens a **Secure Checkout** screen where they choose a payment method:
 
-1. In `dashboard.html`, the Student clicks **My Orders**.
-2. `script.js` sends a **GET** to `/api/orders/user/<customer_id>`.
-3. Flask queries the live database:
-   ```sql
-   SELECT o.order_id, o.status, o.total_amount, o.order_date,
-          m.item_name, oi.quantity, m.price
-   FROM orders o
-   JOIN order_items oi ON o.order_id = oi.order_id
-   JOIN menu m ON oi.item_id = m.item_id
-   WHERE o.customer_id = ?
-   ORDER BY o.order_date DESC
-   ```
-4. Orders are displayed with real-time status: **Pending → Preparing → Ready → Delivered**.
-5. If an order is still **Pending** or **Preparing**, the student can **Cancel** it. Cancellation sends a **PUT** to `/api/orders/<id>/status` with `{ "status": "cancelled" }`.
+- **Cash at Counter** — Order is placed directly. Student pays physically when collecting the food.
+- **UPI** — Razorpay's payment gateway opens. The student completes the UPI payment online. Only after successful payment is the order officially placed.
+
+Once the order is placed, it is saved in the database with a status of **Pending**, and the student sees an animated success screen with their Order ID.
 
 ---
 
-### 5. Admin Login
+### 5. Student Order Tracking
 
-**Frontend → Backend → Database**
+In the **My Orders** section of the dashboard, the student can see all their previous and current orders. The order status is fetched live from the database each time, so it always reflects the latest update from the Admin. The statuses are:
 
-1. Admin opens `admin.html` and enters their Email and Password.
-2. `auth.js` sends a **POST** to `/api/login/admin`.
-3. Flask queries:
-   ```sql
-   SELECT * FROM admin WHERE email = ? AND password = ?
-   ```
-4. If valid, the browser saves `canteen_is_admin = true` in `localStorage` and redirects to `admin-dashboard.html`.
+- **Pending** — Order received, waiting for the canteen to start preparing
+- **Preparing** — Canteen is actively cooking the food
+- **Ready** — Food is ready for pickup at the counter
+- **Delivered** — Food has been handed to the student
+- **Cancelled** — Order was cancelled
 
----
-
-### 6. Admin Order Management
-
-**Database → Backend → Frontend**
-
-1. `admin-dashboard.html` calls **GET** `/api/admin/orders`.
-2. Flask fetches all orders joined with customer names:
-   ```sql
-   SELECT o.*, c.name AS customer_name
-   FROM orders o
-   JOIN customers c ON o.customer_id = c.customer_id
-   ORDER BY o.order_date DESC
-   ```
-3. Admin sees a table of all orders with a **status dropdown** per order.
-4. When Admin changes the status:
-   - If the order is **Cancelled** by the student, the dropdown is **disabled** — Admin cannot modify it.
-   - Otherwise, Admin selects a new status (Preparing / Ready / Delivered).
-   - `admin-dashboard.html` sends a **PUT** to `/api/orders/<id>/status`.
-   - Flask executes:
-     ```sql
-     UPDATE orders SET status = ? WHERE order_id = ?
-     ```
-5. The student's tracking view instantly reflects the new status on next refresh.
+If an order is still **Pending** or **Preparing**, the student has the option to **Cancel** it. Once cancelled, the status is permanently locked — neither the student nor the Admin can change it.
 
 ---
 
-### 7. Admin Menu Management
+### 6. Admin Login
 
-**Frontend → Backend → Database**
+The Admin logs in through a separate **Admin Login** page using their registered email and password. The backend verifies these against the **Admin** table in the database. On success, the Admin is redirected to the **Admin Dashboard**.
 
-Admin can perform full **CRUD** on the menu:
-
-| Action | HTTP Method | API Endpoint | SQL |
-|--------|-------------|--------------|-----|
-| Add item | POST | `/api/menu` | `INSERT INTO menu (...)` |
-| Edit item | PUT | `/api/menu/<id>` | `UPDATE menu SET ... WHERE item_id = ?` |
-| Delete item | DELETE | `/api/menu/<id>` | `UPDATE menu SET stock = -1 WHERE item_id = ?` |
-| Toggle stock | PUT | `/api/menu/<id>` | `UPDATE menu SET stock = ? WHERE item_id = ?` |
-
-> **Note:** Delete is a **soft delete** — the item's `stock` is set to `-1` instead of physically removing the row. This preserves historical order records (foreign key integrity) while hiding the item from students.
+> Admin accounts cannot be created from the website — they can only be added directly in the database by the system owner. This prevents unauthorized people from gaining admin access.
 
 ---
 
-### 8. Admin Sales Report
+### 7. Admin — Managing Orders
 
-**Database → Backend → Frontend**
+The Admin Dashboard shows a live table of **all orders** placed by all students, including the student's name, items ordered, total price, and current status. The Admin can change the status of any order using a dropdown menu (Pending → Preparing → Ready → Delivered).
 
-1. Admin clicks the **Sales Report** tab and selects a filter (Daily / Weekly / Monthly).
-2. `admin-dashboard.html` calls **GET** `/api/admin/dashboard`.
-3. Flask runs three separate SQL queries:
-   - **Daily** — orders delivered **today**
-   - **Weekly** — orders delivered **this current week**
-   - **Monthly** — orders delivered **this current month**
-   ```sql
-   -- Example: Daily
-   SELECT DATE(order_date) as date,
-          SUM(CASE WHEN status='delivered' THEN total_amount ELSE 0 END) as revenue,
-          SUM(CASE WHEN status='delivered' THEN 1 ELSE 0 END) as total_orders
-   FROM orders
-   WHERE DATE(order_date) = CURDATE()
-   ```
-4. Results are displayed as a **bar chart** and a **detailed table** with totals.
-5. Only **delivered** orders count toward revenue — pending, cancelled, and preparing orders are excluded.
+The moment the Admin updates a status, the change is saved in the database and the student's tracking view reflects the new status.
+
+**Important rule:** If a student has **cancelled** an order, the Admin's dropdown is permanently disabled for that order — the Admin cannot modify a cancelled order in any way.
 
 ---
 
-## Database Schema
+### 8. Admin — Menu Management
 
-```
-customers       → stores student accounts
-admin           → stores admin accounts
-menu            → stores all food items (soft-deleted items have stock = -1)
-orders          → one row per order placed by a student
-order_items     → line items for each order (links order ↔ menu)
-settings        → canteen operating hours (opening & closing time)
-```
+The Admin can fully manage the canteen menu from the dashboard:
 
-### Relationships
+- **Add** a new food item with name, price, type (Veg/Non-Veg), category, and image
+- **Edit** an existing item to update its details
+- **Delete** an item to remove it from the student menu
+- **Toggle availability** — Mark an item as Out of Stock or bring it back
 
-```
-customers ──< orders ──< order_items >── menu
-```
+When an item is deleted, it is not permanently erased from the database. Instead, it is hidden from students while keeping past order records safe and intact. This ensures that old orders which included that item are never corrupted.
 
 ---
 
-## Security Design
+### 9. Admin — Sales Report
 
-- **Admin signup is disabled** via the API — new admins can only be created directly in the database.
-- **Admin portal** is protected: students cannot access `admin-dashboard.html` without `canteen_is_admin = true` in localStorage.
-- **Cancelled orders** are locked — neither the student nor the admin can change the status once cancelled.
-- **Soft delete** on menu items prevents data corruption of historical orders.
+The Admin can view a **Sales Report** with three time filters:
+
+- **Daily** — Shows all delivered orders placed today, with the total revenue earned today
+- **Weekly** — Shows all delivered orders from the current week (Monday to today), broken down day by day
+- **Monthly** — Shows all delivered orders from the current month, broken down day by day
+
+The report displays a **bar chart** for visual understanding and a **detailed table** with order counts and revenue. Only **Delivered** orders are counted toward revenue — pending, preparing, and cancelled orders are excluded.
 
 ---
 
-## Payment Flow (Razorpay)
+### 10. Canteen Operating Hours
 
-```
-Student → selects UPI
-       → Frontend calls /api/razorpay/create_order
-       → Backend creates a Razorpay order (gets an order_id from Razorpay)
-       → Frontend opens Razorpay payment popup
-       → Student completes payment
-       → On success, Frontend calls /api/orders to save the order in DB
-```
+The Admin can set the canteen's **Opening** and **Closing** time from the dashboard. If a student tries to place an order outside these hours, they are informed that the canteen is currently closed and orders are blocked automatically.
 
-Cash payments skip Razorpay entirely and go directly to `/api/orders`.
+---
+
+## Database Overview
+
+The database has 6 main tables:
+
+| Table | What it stores |
+|-------|---------------|
+| **customers** | All registered student accounts |
+| **admin** | Admin login credentials |
+| **menu** | All food items available in the canteen |
+| **orders** | Every order placed by students |
+| **order_items** | The individual food items within each order |
+| **settings** | Canteen operating hours |
+
+### How the tables connect
+
+- Each **student** can place multiple **orders**
+- Each **order** contains one or more **order_items**
+- Each **order_item** links back to a specific item in the **menu**
+
+---
+
+## Security Highlights
+
+- Admin signup is completely disabled from the website — only database-level creation is allowed
+- Students cannot access the Admin Dashboard — they are automatically redirected to the login page
+- Cancelled orders are permanently locked from modification by anyone
+- Menu deletions are safe — historical orders are never lost or broken
+
+---
+
+## Payment Flow Summary
+
+When a student pays via UPI, the system creates a secure payment session through Razorpay. The student scans the QR or enters their UPI ID and completes the transaction. Only after Razorpay confirms the payment does the system officially record the order. Cash payments skip this step entirely and are confirmed immediately at checkout.
