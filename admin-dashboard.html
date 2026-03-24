@@ -426,12 +426,19 @@
             const price = parseFloat(document.getElementById('new-price').value);
             const type = document.getElementById('new-type').value;
             const category = document.getElementById('new-category').value;
-            const img = document.getElementById('new-img').value.trim() || '';
+            let img = document.getElementById('new-img').value.trim();
             const desc = document.getElementById('new-desc').value.trim();
             if (!name || !price) { alert('Name and Price are required!'); return; }
+
+            // Auto-fetch relevant image from Unsplash if admin leaves image blank
+            if (!img) {
+                const query = encodeURIComponent(name + ' food');
+                img = `https://source.unsplash.com/500x400/?${query}`;
+            }
+
             await window.addMenuItem({ name, price, type, category, img, desc });
             ['new-name','new-price','new-img','new-desc'].forEach(id => document.getElementById(id).value = '');
-            await fetchAndRenderMenu(); // re-fetch live from DB
+            await fetchAndRenderMenu();
             alert(`"${name}" added to menu!`);
         };
 

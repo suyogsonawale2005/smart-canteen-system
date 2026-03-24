@@ -30,7 +30,8 @@ try:
         'Mango Milkshake': 'images/mango_milkshake.png',
         'Cutting Chai': 'images/cutting_chai.png',
         'Soft Drink': 'images/soft_drink.png',
-        'Chicken Roll ' : 'images/chicken_roll.png'
+        'Chicken Roll ' : 'images/chicken_roll.png',
+        'Bisleri' : 'images/bisleri.png'
     }
 
     for name, path in mappings.items():

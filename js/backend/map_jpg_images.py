@@ -14,6 +14,7 @@ try:
         'Aloo Paratha': 'images/aloo_paratha.jpg',
         'Bread Omelette': 'images/bread_omelette.jpg',
         'Buttermilk': 'images/butter_milk.jpg',
+        'Bisleri ' : 'images/bisleri.png',
         'Chicken Noodles': 'images/chinese_noodles.jpg',
         'Cold Coffee': 'images/cold_cofee.jpg',
         'Cutting Chai': 'images/cutting_chai.png',
